@@ -14,8 +14,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 """
 
-df_combinado = pd.read_parquet(r'Jupyter\df_combinado.parquet')
-df_combinado2 = pd.read_parquet(r'Jupyter\df_combinado2.parquet')
+df_combinado = pd.read_parquet('Jupyter\df_combinado.parquet')
+df_combinado2 = pd.read_parquet('Jupyter\df_combinado2.parquet')
 
 
 app = FastAPI(title= 'Proyecto Integrador 1',
