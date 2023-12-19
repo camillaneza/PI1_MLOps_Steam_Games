@@ -1,5 +1,3 @@
-## FUNCIONES DE UTILIDAD PARA EL ETL Y EDA
-# Importaciones
 import pandas as pd
 from textblob import TextBlob
 import re

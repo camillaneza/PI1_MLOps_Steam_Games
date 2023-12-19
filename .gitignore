@@ -1,7 +1,7 @@
 Jupyter/PRUEBAS.ipynb
-Datasets/australian_user_reviews.json
-Datasets/australian_users_items.json
-Datasets/output_steam_games.json
-Datasets/user_reviews.csv
-Datasets/users_items.csv
+Data/australian_user_reviews.json
+Data/australian_users_items.json
+Data/output_steam_games.json
+Data/user_reviews.csv
+Data/users_items.csv
 h_venv/
