@@ -7,13 +7,15 @@ from typing import List, Dict
 import importlib
 importlib.reload(Funciones_API)
 import fastparquet
-import dask.dataframe as dd
-import dask
+
 
 """
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 """
+
+df_combinado = pd.read_parquet(r'Jupyter\df_combinado.parquet')
+df_combinado2 = pd.read_parquet(r'Jupyter\df_combinado2.parquet')
 
 
 app = FastAPI(title= 'Proyecto Integrador 1',
@@ -29,7 +31,7 @@ async def read_root():
 async def about():
     return 'Proyecto Integrador 1: Machine Learning Operations'
 
-
+"""
 
 @app.get('/PlayTimeGenre/{genero}')
 async def PlayTimeGenre(genero: str):
@@ -82,3 +84,6 @@ def sentiment_analysis(año):
         return resultado
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+"""

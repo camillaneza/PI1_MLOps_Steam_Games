@@ -5,9 +5,6 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from typing import List, Dict
 import fastparquet
-import dask.dataframe as dd
-import dask
-
 
 
 def Play_Time_Genre(df, genero):
