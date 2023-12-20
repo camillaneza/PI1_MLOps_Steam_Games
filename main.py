@@ -6,16 +6,20 @@ from Jupyter import Funciones_API
 from typing import List, Dict
 import importlib
 importlib.reload(Funciones_API)
-import fastparquet
+from fastparquet import ParquetFile
+import os
 
 
-"""
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-"""
 
-df_combinado = pd.read_parquet('Jupyter\df_combinado.parquet')
-df_combinado2 = pd.read_parquet('Jupyter\df_combinado2.parquet')
+
+ruta_archivo_combinado = os.path.join('Jupyter', 'df_combinado.parquet')
+ruta_archivo_combinado2 = os.path.join('Jupyter', 'df_combinado2.parquet')
+
+parquet_file = ParquetFile(ruta_archivo_combinado)
+parquet_file2 = ParquetFile(ruta_archivo_combinado2)
+
+df_combinado = parquet_file.to_pandas()
+df_combinado2 = parquet_file2.to_pandas()
 
 
 app = FastAPI(title= 'Proyecto Integrador 1',
