@@ -296,3 +296,22 @@ def extraer_anio(date_str):
         return year
     except (ValueError, IndexError):
         return 'sin fecha'
+
+def cantidad_porcentaje(df, columna):
+    '''
+    Cuanta la cantidad de True/False luego calcula el porcentaje.
+
+    Parameters:
+    - df (DataFrame): El DataFrame que contiene los datos.
+    - columna (str): El nombre de la columna en el DataFrame para la cual se desea generar el resumen.
+
+    Returns:
+    DataFrame: Un DataFrame que resume la cantidad y el porcentaje de True/False en la columna especificada.
+    '''
+    counts = df[columna].value_counts()
+    percentages = round(100 * counts / len(df),2)
+    df_results = pd.DataFrame({
+        "Cantidad": counts,
+        "Porcentaje": percentages
+    })
+    return df_results
