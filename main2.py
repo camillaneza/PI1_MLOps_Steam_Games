@@ -2,11 +2,11 @@ from fastapi import FastAPI, HTTPException, Path
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 import pandas as pd
-from Jupyter import Funciones_API
 from typing import List, Dict
-import importlib
-importlib.reload(Funciones_API)
 import os
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import TfidfVectorizer
+
 
 file_path = os.path.join("Jupyter", "df_combinado.parquet")
 df_combinado = pd.read_parquet(file_path)
@@ -172,3 +172,63 @@ def sentiment_analysis(anio: int):
         raise HTTPException(status_code=404, detail=f"No hay datos para el año {anio}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get('/RecomendacionJuego/{id_juego}')
+def recomendacion_juego(id_juego: int):
+    '''
+    Endpoint para obtener una lista de juegos recomendados similares a un juego dado.
+
+    Parámetros:
+    - id_juego (int): ID del juego para el cual se desean obtener recomendaciones.
+
+    Respuestas:
+    - 200 OK: Retorna una lista con 5 juegos recomendados similares al juego ingresado.
+    - 404 Not Found: Si no se encuentra el juego con el ID especificado.
+    - 500 Internal Server Error: En caso de cualquier otro error, proporciona detalles de la excepción.
+
+    Ejemplo de Uso:
+    - /RecomendarJuego/123
+
+    Ejemplo de Respuesta Exitosa:
+    [
+        {"id": 456, "nombre": "Juego A"},
+        {"id": 789, "nombre": "Juego B"},
+        {"id": 101, "nombre": "Juego C"},
+        {"id": 202, "nombre": "Juego D"},
+        {"id": 303, "nombre": "Juego E"}
+    ]
+    '''
+    try:
+        # Busca el juego en el DataFrame por ID
+        juego_seleccionado = df_combinado2[df_combinado2['item_id'] == id_juego]
+
+        # Verifica si el juego con el ID especificado existe
+        if juego_seleccionado.empty:
+            raise HTTPException(status_code=404, detail=f"No se encontró el juego con ID {id_juego}")
+
+        title_game_and_genres = ' '.join(juego_seleccionado['title'].fillna('').astype(str) + ' ' + juego_seleccionado['genres'].fillna('').astype(str))
+       
+        tfidf_vectorizer = TfidfVectorizer()
+
+        chunk_size = 100   
+        similarity_scores = None
+
+        chunk_tags_and_genres = df_combinado2['title'].fillna('').astype(str) + ' ' + df_combinado2['genres'].fillna('').astype(str)
+        games_to_compare = [title_game_and_genres] + chunk_tags_and_genres.tolist()
+
+        tfidf_matrix = tfidf_vectorizer.fit_transform(games_to_compare)
+
+        similarity_scores = cosine_similarity(tfidf_matrix)
+
+        if similarity_scores is not None:
+            similar_games_indices = similarity_scores[0].argsort()[::-1]
+
+            num_recommendations = 5
+            recommended_games = df_combinado2.loc[similar_games_indices[1:num_recommendations + 1]]
+
+            return recommended_games[['title']].to_dict(orient='records')
+
+        return {"message": "No se encontraron juegos similares."}
+
+    except Exception as e:
+        return {"message": f"Error: {str(e)}"}
