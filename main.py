@@ -1,6 +1,5 @@
 from fastapi import FastAPI, HTTPException, Path
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
 import pandas as pd
 from typing import List, Dict
 import os
