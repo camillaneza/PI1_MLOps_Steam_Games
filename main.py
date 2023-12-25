@@ -174,7 +174,7 @@ def sentiment_analysis(anio: int):
 
 @app.get('/RecomendacionJuego/{id_juego}')
 def recomendacion_juego(id_juego: int):
-    '''
+    """
     Endpoint para obtener una lista de juegos recomendados similares a un juego dado.
 
     Parámetros:
@@ -196,38 +196,47 @@ def recomendacion_juego(id_juego: int):
         {"id": 202, "nombre": "Juego D"},
         {"id": 303, "nombre": "Juego E"}
     ]
-    '''
+    """
     try:
-        # Busca el juego en el DataFrame por ID
-        juego_seleccionado = df_combinado2[df_combinado2['item_id'] == id_juego]
+        porcentaje_muestra = 20
+        total_registros = len(df_combinado2)
 
-        # Verifica si el juego con el ID especificado existe
+        num_registros = int(total_registros * (porcentaje_muestra / 100))
+
+        df_subset = df_combinado2.sample(n=num_registros, random_state=42).reset_index(drop=True)
+
+        num_recommendations = 5
+
+        juego_seleccionado = df_subset[df_subset['item_id'] == id_juego]
+
         if juego_seleccionado.empty:
             raise HTTPException(status_code=404, detail=f"No se encontró el juego con ID {id_juego}")
 
         title_game_and_genres = ' '.join(juego_seleccionado['title'].fillna('').astype(str) + ' ' + juego_seleccionado['genres'].fillna('').astype(str))
-       
         tfidf_vectorizer = TfidfVectorizer()
+        tfidf_matrix = tfidf_vectorizer.fit_transform(df_subset['title'].fillna('').astype(str) + ' ' + df_subset['genres'].fillna('').astype(str))
 
-        chunk_size = 100   
-        similarity_scores = None
-
-        chunk_tags_and_genres = df_combinado2['title'].fillna('').astype(str) + ' ' + df_combinado2['genres'].fillna('').astype(str)
-        games_to_compare = [title_game_and_genres] + chunk_tags_and_genres.tolist()
-
-        tfidf_matrix = tfidf_vectorizer.fit_transform(games_to_compare)
-
-        similarity_scores = cosine_similarity(tfidf_matrix)
+        juego_tfidf = tfidf_vectorizer.transform([title_game_and_genres])
+        similarity_scores = cosine_similarity(juego_tfidf, tfidf_matrix)
 
         if similarity_scores is not None:
             similar_games_indices = similarity_scores[0].argsort()[::-1]
 
-            num_recommendations = 5
-            recommended_games = df_combinado2.loc[similar_games_indices[1:num_recommendations + 1]]
+            
+            recommended_games = df_subset.loc[similar_games_indices[1:]]
+            recommended_games = recommended_games[~recommended_games['item_id'].isin([id_juego])].drop_duplicates(subset='title')
 
-            return recommended_games[['title']].to_dict(orient='records')
+            recommendations_list = recommended_games.head(num_recommendations)['title'].tolist()
 
-        return {"message": "No se encontraron juegos similares."}
+            if len(recommendations_list) < num_recommendations:
+                message = f"Se encontraron {len(recommendations_list)} recomendaciones para este ID."
+                recommendations_list += [None] * (num_recommendations - len(recommendations_list))
+            else:
+                message = None
+
+            return {"recomendaciones": recommendations_list, "message": message}
+        else:
+            return {"message": "No se encontraron juegos similares."}
 
     except Exception as e:
-        return {"message": f"Error: {str(e)}"}
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}") from e
