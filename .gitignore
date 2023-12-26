@@ -8,4 +8,5 @@ Data/steam_games.csv
 Data/Diccionario de Datos STEAM.xlsx
 Jupyter/users_items.parquet
 Jupyter/users_reviews.parquet
+Jupyter/__pycache__
 h_venv/
