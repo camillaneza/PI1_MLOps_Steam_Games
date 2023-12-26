@@ -37,7 +37,7 @@ except Exception as e:
     raise HTTPException(status_code=500, detail="Error al cargar el archivo de datos Parquet")
 
 app = FastAPI(title= 'Proyecto Integrador 1',
-              description= 'Machine Learning Operations (MLOps)',
+              description= 'Machine Learning Operations (MLOps), por Camila Fernández Llaneza',
               version= '1.0.1', debug=True)
 
 
@@ -313,7 +313,7 @@ def play_time_genre(genero: str = Path(..., description="Devuelve el año con m�
     return PlayTimeGenre(genero)
 
 @app.get(path='/UserForGenre/{genero}', tags=["Funciones Generales"])
-def user_for_genre(genero: str = Path(..., description="Devuelve el usuario que acumula más horas jugadas para el género especificado")):
+def user_for_genre(genero: str = Path(..., description="Devuelve el usuario que acumula más horas jugadas para el género especificado (Ingresar la primer letra en Mayúscula)")):
     return UserForGenre(genero)
 
 
