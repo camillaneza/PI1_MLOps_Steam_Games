@@ -3,15 +3,43 @@ from fastapi.responses import HTMLResponse
 import pandas as pd
 from typing import List, Dict
 import os
+import pyarrow.parquet as pq
+import asyncio
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
+import gzip
 
 
-file_path = os.path.join("Jupyter", "df_combinado.parquet")
-df_combinado = pd.read_parquet(file_path)
+# Ruta de los archivos Parquet Gzip
+parquet_gzip_file_path1 = os.path.abspath(os.path.join("Jupyter", "df_combinado.parquet.gzip"))
+parquet_gzip_file_path2 = os.path.abspath(os.path.join("Jupyter", "df_combinado.parquet.gzip"))
 
-file_path = os.path.join("Jupyter", "df_combinado2.parquet")
-df_combinado2 = pd.read_parquet(file_path)
+
+try:
+    sample_percent = 5
+
+    # Descomprimir el primer archivo gzip y leer una muestra del archivo Parquet con pyarrow
+    with gzip.open(parquet_gzip_file_path1, 'rb') as f1:
+        parquet_file1 = pq.ParquetFile(f1)
+        total_row_groups1 = parquet_file1.num_row_groups
+        sample_row_groups1 = [i for i in range(total_row_groups1) if i % (100 // sample_percent) == 0]
+        df_combinado_muestra1 = parquet_file1.read_row_groups(row_groups=sample_row_groups1).to_pandas()
+
+    # Descomprimir el segundo archivo gzip y leer una muestra del archivo Parquet con pyarrow
+    with gzip.open(parquet_gzip_file_path2, 'rb') as f2:
+        parquet_file2 = pq.ParquetFile(f2)
+        total_row_groups2 = parquet_file2.num_row_groups
+        sample_row_groups2 = [i for i in range(total_row_groups2) if i % (100 // sample_percent) == 0]
+        df_combinado_muestra2 = parquet_file2.read_row_groups(row_groups=sample_row_groups2).to_pandas()
+
+except FileNotFoundError:
+    # Si alguno de los archivos no se encuentra, maneja la excepción
+    raise HTTPException(status_code=500, detail="Error al cargar el archivo de datos comprimido con gzip")
+except Exception as e:
+    # Si ocurre cualquier otra excepción, imprime información detallada
+    print(f"Ocurrió una excepción: {str(e)}")
+    raise HTTPException(status_code=500, detail="Error al cargar el archivo de datos comprimido con gzip")
+
 
 app = FastAPI(title= 'Proyecto Integrador 1',
               description= 'Machine Learning Operations (MLOps)',
@@ -35,7 +63,7 @@ def PlayTimeGenre(genero: str):
     - Dict: {"Año de lanzamiento con más horas jugadas para Género X": int}
     '''
     try:
-        genero_filtrado = df_combinado2[df_combinado2['genres'].apply(lambda x: genero in x)]
+        genero_filtrado = df_combinado2_muestra[df_combinado2_muestra['genres'].apply(lambda x: genero in x)]
 
         if genero_filtrado.empty:
             raise HTTPException(status_code=404, detail=f"No hay datos para el género {genero}")
@@ -63,8 +91,8 @@ def UserForGenre(genero:str):
     '''
     try:
         
-        condition = df_combinado2['genres'].apply(lambda x: genero in x)
-        juegos_genero = df_combinado2[condition]
+        condition = df_combinado2_muestra['genres'].apply(lambda x: genero in x)
+        juegos_genero = df_combinado2_muestra[condition]
 
        
         juegos_genero['playtime_forever'] = juegos_genero['playtime_forever'] / 60
@@ -108,10 +136,10 @@ def UsersRecommend(anio: int):
     - List: [{"Puesto 1": str}, {"Puesto 2": str}, {"Puesto 3": str}]
     '''
     try:
-        filtered_df = df_combinado[
-        (df_combinado["reviews_posted"] == anio) &
-        (df_combinado["reviews_recommend"] == True) &
-        (df_combinado["sentiment_analysis"]>=1)
+        filtered_df = df_combinado_muestra[
+        (df_combinado_muestra["reviews_posted"] == anio) &
+        (df_combinado_muestra["reviews_recommend"] == True) &
+        (df_combinado_muestra["sentiment_analysis"]>=1)
         ]
         recommend_counts = filtered_df.groupby("title")["title"].count().reset_index(name="count").sort_values(by="count", ascending=False).head(3)
         top_3_dict = {f"Puesto {i+1}": juego for i, juego in enumerate(recommend_counts['title'])}
@@ -132,10 +160,10 @@ def UsersNotRecommend(anio: int):
     - List: [{"Puesto 1": str}, {"Puesto 2": str}, {"Puesto 3": str}]
     '''
     try:
-        filtered_df = df_combinado[
-        (df_combinado["reviews_posted"] == anio) &
-        (df_combinado["reviews_recommend"] == False) &
-        (df_combinado["sentiment_analysis"]==0)
+        filtered_df = df_combinado_muestra[
+        (df_combinado_muestra["reviews_posted"] == anio) &
+        (df_combinado_muestra["reviews_recommend"] == False) &
+        (df_combinado_muestra["sentiment_analysis"]==0)
         ]
         not_recommend_counts = filtered_df.groupby("title")["title"].count().reset_index(name="count").sort_values(by="count", ascending=False).head(3)
         top_3_dict = {f"Puesto {i+1}": juego for i, juego in enumerate(not_recommend_counts['title'])}
@@ -157,7 +185,7 @@ def sentiment_analysis(anio: int):
     '''
   
     try:    
-        filtered_df = df_combinado[df_combinado["release_date"] == anio]
+        filtered_df = df_combinado_muestra[df_combinado_muestra["release_date"] == anio]
 
         
         sentiment_counts = filtered_df["sentiment_analysis"].value_counts()
@@ -199,11 +227,11 @@ def recomendacion_juego(id_juego: int):
     """
     try:
         porcentaje_muestra = 20
-        total_registros = len(df_combinado2)
+        total_registros = len(df_combinado2_muestra)
 
         num_registros = int(total_registros * (porcentaje_muestra / 100))
 
-        df_subset = df_combinado2.sample(n=num_registros, random_state=42).reset_index(drop=True)
+        df_subset = df_combinado2_muestra.sample(n=num_registros, random_state=42).reset_index(drop=True)
 
         num_recommendations = 5
 
