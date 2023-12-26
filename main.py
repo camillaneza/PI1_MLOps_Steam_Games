@@ -10,45 +10,38 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import gzip
 
 
-# Ruta de los archivos Parquet Gzip
-parquet_gzip_file_path1 = os.path.abspath(os.path.join("Jupyter", "df_combinado.parquet.gzip"))
-parquet_gzip_file_path2 = os.path.abspath(os.path.join("Jupyter", "df_combinado.parquet.gzip"))
-
+parquet_file_path1 = os.path.abspath(os.path.join("Jupyter", "df_combinado_gzip.parquet"))
+parquet_file_path2 = os.path.abspath(os.path.join("Jupyter", "df_combinado2_gzip.parquet"))
 
 try:
     sample_percent = 5
 
-    # Descomprimir el primer archivo gzip y leer una muestra del archivo Parquet con pyarrow
-    with gzip.open(parquet_gzip_file_path1, 'rb') as f1:
-        parquet_file1 = pq.ParquetFile(f1)
-        total_row_groups1 = parquet_file1.num_row_groups
-        sample_row_groups1 = [i for i in range(total_row_groups1) if i % (100 // sample_percent) == 0]
-        df_combinado_muestra1 = parquet_file1.read_row_groups(row_groups=sample_row_groups1).to_pandas()
+    # Lee una muestra del archivo Parquet con pyarrow
+    parquet_file1 = pq.ParquetFile(parquet_file_path1)
+    total_row_groups1 = parquet_file1.num_row_groups
+    sample_row_groups1 = [i for i in range(total_row_groups1) if i % (100 // sample_percent) == 0]
+    df_combinado_muestra1 = parquet_file1.read_row_groups(row_groups=sample_row_groups1).to_pandas()
 
-    # Descomprimir el segundo archivo gzip y leer una muestra del archivo Parquet con pyarrow
-    with gzip.open(parquet_gzip_file_path2, 'rb') as f2:
-        parquet_file2 = pq.ParquetFile(f2)
-        total_row_groups2 = parquet_file2.num_row_groups
-        sample_row_groups2 = [i for i in range(total_row_groups2) if i % (100 // sample_percent) == 0]
-        df_combinado_muestra2 = parquet_file2.read_row_groups(row_groups=sample_row_groups2).to_pandas()
+    # Lee una muestra del archivo Parquet con pyarrow
+    parquet_file2 = pq.ParquetFile(parquet_file_path2)
+    total_row_groups2 = parquet_file2.num_row_groups
+    sample_row_groups2 = [i for i in range(total_row_groups2) if i % (100 // sample_percent) == 0]
+    df_combinado_muestra2 = parquet_file2.read_row_groups(row_groups=sample_row_groups2).to_pandas()
 
 except FileNotFoundError:
     # Si alguno de los archivos no se encuentra, maneja la excepción
-    raise HTTPException(status_code=500, detail="Error al cargar el archivo de datos comprimido con gzip")
+    raise HTTPException(status_code=500, detail="Error al cargar el archivo de datos Parquet")
 except Exception as e:
     # Si ocurre cualquier otra excepción, imprime información detallada
     print(f"Ocurrió una excepción: {str(e)}")
-    raise HTTPException(status_code=500, detail="Error al cargar el archivo de datos comprimido con gzip")
-
+    raise HTTPException(status_code=500, detail="Error al cargar el archivo de datos Parquet")
 
 app = FastAPI(title= 'Proyecto Integrador 1',
               description= 'Machine Learning Operations (MLOps)',
               version= '1.0.1', debug=True)
 
 
-@app.get("/")
-async def read_root():
-    return  {"Proyecto Integrador 1: Machine Learning Operations (MLOps)"}
+
 
 @app.get('/PlayTimeGenre/{genero}')
 def PlayTimeGenre(genero: str):
@@ -63,7 +56,7 @@ def PlayTimeGenre(genero: str):
     - Dict: {"Año de lanzamiento con más horas jugadas para Género X": int}
     '''
     try:
-        genero_filtrado = df_combinado2_muestra[df_combinado2_muestra['genres'].apply(lambda x: genero in x)]
+        genero_filtrado = df_combinado_muestra2[df_combinado_muestra2['genres'].apply(lambda x: genero in x)]
 
         if genero_filtrado.empty:
             raise HTTPException(status_code=404, detail=f"No hay datos para el género {genero}")
@@ -91,8 +84,8 @@ def UserForGenre(genero:str):
     '''
     try:
         
-        condition = df_combinado2_muestra['genres'].apply(lambda x: genero in x)
-        juegos_genero = df_combinado2_muestra[condition]
+        condition = df_combinado_muestra2['genres'].apply(lambda x: genero in x)
+        juegos_genero = df_combinado_muestra2[condition]
 
        
         juegos_genero['playtime_forever'] = juegos_genero['playtime_forever'] / 60
@@ -136,10 +129,10 @@ def UsersRecommend(anio: int):
     - List: [{"Puesto 1": str}, {"Puesto 2": str}, {"Puesto 3": str}]
     '''
     try:
-        filtered_df = df_combinado_muestra[
-        (df_combinado_muestra["reviews_posted"] == anio) &
-        (df_combinado_muestra["reviews_recommend"] == True) &
-        (df_combinado_muestra["sentiment_analysis"]>=1)
+        filtered_df = df_combinado_muestra1[
+        (df_combinado_muestra1["reviews_posted"] == anio) &
+        (df_combinado_muestra1["reviews_recommend"] == True) &
+        (df_combinado_muestra1["sentiment_analysis"]>=1)
         ]
         recommend_counts = filtered_df.groupby("title")["title"].count().reset_index(name="count").sort_values(by="count", ascending=False).head(3)
         top_3_dict = {f"Puesto {i+1}": juego for i, juego in enumerate(recommend_counts['title'])}
@@ -160,10 +153,10 @@ def UsersNotRecommend(anio: int):
     - List: [{"Puesto 1": str}, {"Puesto 2": str}, {"Puesto 3": str}]
     '''
     try:
-        filtered_df = df_combinado_muestra[
-        (df_combinado_muestra["reviews_posted"] == anio) &
-        (df_combinado_muestra["reviews_recommend"] == False) &
-        (df_combinado_muestra["sentiment_analysis"]==0)
+        filtered_df = df_combinado_muestra1[
+        (df_combinado_muestra1["reviews_posted"] == anio) &
+        (df_combinado_muestra1["reviews_recommend"] == False) &
+        (df_combinado_muestra1["sentiment_analysis"]==0)
         ]
         not_recommend_counts = filtered_df.groupby("title")["title"].count().reset_index(name="count").sort_values(by="count", ascending=False).head(3)
         top_3_dict = {f"Puesto {i+1}": juego for i, juego in enumerate(not_recommend_counts['title'])}
@@ -185,7 +178,7 @@ def sentiment_analysis(anio: int):
     '''
   
     try:    
-        filtered_df = df_combinado_muestra[df_combinado_muestra["release_date"] == anio]
+        filtered_df = df_combinado_muestra1[df_combinado_muestra1["release_date"] == anio]
 
         
         sentiment_counts = filtered_df["sentiment_analysis"].value_counts()
@@ -200,8 +193,8 @@ def sentiment_analysis(anio: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get('/RecomendacionJuego/{id_juego}')
-def recomendacion_juego(id_juego: int):
+@app.get('/RecomendacionJuego/{id_producto}')
+async def recomendacion_juego(id_producto: int = Path(..., description="ID del juego para obtener recomendaciones")):
     """
     Endpoint para obtener una lista de juegos recomendados similares a un juego dado.
 
@@ -226,19 +219,19 @@ def recomendacion_juego(id_juego: int):
     ]
     """
     try:
-        porcentaje_muestra = 20
-        total_registros = len(df_combinado2_muestra)
+        porcentaje_muestra = 50
+        total_registros = len(df_combinado_muestra2)
 
         num_registros = int(total_registros * (porcentaje_muestra / 100))
 
-        df_subset = df_combinado2_muestra.sample(n=num_registros, random_state=42).reset_index(drop=True)
+        df_subset = df_combinado_muestra2.sample(n=num_registros, random_state=42).reset_index(drop=True)
 
         num_recommendations = 5
 
-        juego_seleccionado = df_subset[df_subset['item_id'] == id_juego]
+        juego_seleccionado = df_subset[df_subset['item_id'] == id_producto]
 
         if juego_seleccionado.empty:
-            raise HTTPException(status_code=404, detail=f"No se encontró el juego con ID {id_juego}")
+            raise HTTPException(status_code=404, detail=f"No se encontró el juego con ID {id_producto}")
 
         title_game_and_genres = ' '.join(juego_seleccionado['title'].fillna('').astype(str) + ' ' + juego_seleccionado['genres'].fillna('').astype(str))
         tfidf_vectorizer = TfidfVectorizer()
@@ -252,7 +245,7 @@ def recomendacion_juego(id_juego: int):
 
             
             recommended_games = df_subset.loc[similar_games_indices[1:]]
-            recommended_games = recommended_games[~recommended_games['item_id'].isin([id_juego])].drop_duplicates(subset='title')
+            recommended_games = recommended_games[~recommended_games['item_id'].isin([id_producto])].drop_duplicates(subset='title')
 
             recommendations_list = recommended_games.head(num_recommendations)['title'].tolist()
 
@@ -268,3 +261,78 @@ def recomendacion_juego(id_juego: int):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}") from e
+
+
+
+
+
+# Inicio
+    
+@app.get("/", response_class=HTMLResponse, tags=["Home"])
+async def presentacion():
+    return '''
+        <html>
+            <head>
+                <title>API Steam</title>
+                <style>
+                    body {
+                        color: black; 
+                        background-color: white; 
+                        font-family: Arial, sans-serif;
+                        padding: 20px;
+                    }
+                    h1 {
+                        color: #333;
+                        text-align: center;
+                    }
+                    p {
+                        color: #666;
+                        text-align: center;
+                        font-size: 18px;
+                        margin-top: 20px;
+                    }
+                    footer {
+                        text-align: center;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>Proyecto Individual N° 1: MLOps Steam</h1>
+                <p>Esta es una API para consultas de la plataforma Steam.</p>
+                <p>Escriba <span style="background-color: lightgray;">/docs</span> a continuación de la URL actual para ingresar.</p>
+                
+            </body>
+        </html>
+    '''
+
+
+# Funciones
+
+@app.get(path='/PlayTimeGenre/{genero}', tags=["Funciones Generales"])
+def play_time_genre(genero: str = Path(..., description="Devuelve el año con más horas jugadas para el género especificado (Ingresar la primer letra en Mayúscula)")):
+    return PlayTimeGenre(genero)
+
+@app.get(path='/UserForGenre/{genero}', tags=["Funciones Generales"])
+def user_for_genre(genero: str = Path(..., description="Devuelve el usuario que acumula más horas jugadas para el género especificado")):
+    return UserForGenre(genero)
+
+
+@app.get("/UsersRecommend/{anio}", tags=["Funciones Generales"])
+def users_recommend(anio: int = Path(..., description="Devuelve el top 3 de juegos más recomendados para el año especificado")):
+        try:
+            result = UsersRecommend(anio)
+            return result
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+@app.get(path='/UsersNotRecommend/{anio}', tags=["Funciones Generales"])
+def users_not_recommend(anio: int = Path(..., description="Devuelve el top 3 de juegos menos recomendados para el año especificado")):
+    return UsersNotRecommend(anio)
+
+@app.get(path='/sentiment_analysis/{anio}', tags=["Funciones Generales"])
+def sentiment_analysis(anio: int = Path(..., description="Devuelve una lista con la cantidad de registros de reseñas de usuarios que se encuentran categorizados con un análisis de sentimiento en el año especificado")):
+    return sentiment_analysis(anio)
+
+@app.get(path='/RecomendacionJuego/{id_producto}', tags=["Sistema de Recomendación: Item-Item"])
+async def recomendacion_juego(id_producto: int = Path(..., description= "Devuelve una lista con 5 juegos recomendados similares al ingresado")):
+    return recomendacion_juego(id_producto)
