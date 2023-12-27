@@ -8,13 +8,11 @@ import asyncio
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 import gzip
-from fastapi_cache import caches
 
 
 parquet_file_path1 = "Jupyter/df_combinado_gzip.parquet"
 parquet_file_path2 = "Jupyter/df_combinado2_gzip.parquet"
 
-caches.set("default", "sqlite:///:memory:")
 
 app = FastAPI(title= 'Proyecto Integrador 1',
               description= 'Machine Learning Operations (MLOps), por Camila Fernández Llaneza',
@@ -217,26 +215,6 @@ async def sentiment_analysis(anio: int):
 
 
 
-sample_percent = 5
-
-# Lee una muestra del archivo Parquet con pyarrow
-parquet_file2 = pq.ParquetFile(parquet_file_path2)
-total_rows2 = parquet_file2.metadata.num_rows
-sample_rows2 = int(total_rows2 * (sample_percent / 100.0))
-df_combinado_muestra2 = parquet_file2.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows2//80)
-
-porcentaje_muestra = 50
-total_registros = len(df_combinado_muestra2)
-num_registros = int(total_registros * (porcentaje_muestra / 100.0))
-df_subset = df_combinado_muestra2.sample(n=num_registros, random_state=42).reset_index(drop=True)
-
-# Crear objetos TF-IDF fuera de la función
-tfidf_vectorizer = TfidfVectorizer()
-tfidf_matrix = tfidf_vectorizer.fit_transform(df_subset['title'].fillna('').astype(str) + ' ' + df_subset['genres'].fillna('').astype(str))
-
-
-
-
 
 @app.get('/RecomendacionJuego/{id_producto}')
 async def recomendacion_juego(id_producto: int = Path(..., description="ID del juego para obtener recomendaciones")):
@@ -264,34 +242,57 @@ async def recomendacion_juego(id_producto: int = Path(..., description="ID del j
     ]
     """
     try:
-        # Utilizar los objetos TF-IDF creados fuera de la función
+        sample_percent = 5
+
+        # Lee una muestra del archivo Parquet con pyarrow
+        parquet_file2 = pq.ParquetFile(parquet_file_path2)
+        total_rows2 = parquet_file2.metadata.num_rows
+        sample_rows2 = int(total_rows2 * (sample_percent / 100.0))
+        df_combinado_muestra2 = parquet_file2.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows2//80)
+
+        porcentaje_muestra = 50
+        total_registros = len(df_combinado_muestra2)
+        num_registros = int(total_registros * (porcentaje_muestra / 100.0))
+        df_subset = df_combinado_muestra2.sample(n=num_registros, random_state=42).reset_index(drop=True)
+        porcentaje_muestra = 50
+        total_registros = len(df_combinado_muestra2)
+
+        num_registros = int(total_registros * (porcentaje_muestra / 100))
+
+        df_subset = df_combinado_muestra2.sample(n=num_registros, random_state=42).reset_index(drop=True)
+
+        num_recommendations = 5
+
         juego_seleccionado = df_subset[df_subset['item_id'] == id_producto]
 
         if juego_seleccionado.empty:
             raise HTTPException(status_code=404, detail=f"No se encontró el juego con ID {id_producto}")
 
         title_game_and_genres = ' '.join(juego_seleccionado['title'].fillna('').astype(str) + ' ' + juego_seleccionado['genres'].fillna('').astype(str))
+        tfidf_vectorizer = TfidfVectorizer()
+        tfidf_matrix = tfidf_vectorizer.fit_transform(df_subset['title'].fillna('').astype(str) + ' ' + df_subset['genres'].fillna('').astype(str))
+
         juego_tfidf = tfidf_vectorizer.transform([title_game_and_genres])
         similarity_scores = cosine_similarity(juego_tfidf, tfidf_matrix)
 
-        # Obtener los índices de los juegos más similares
-        similar_games_indices = similarity_scores[0].argsort()[::-1]
+        if similarity_scores is not None:
+            similar_games_indices = similarity_scores[0].argsort()[::-1]
 
-        # Obtener los juegos recomendados (excluyendo el juego seleccionado)
-        recommended_games = df_subset.loc[similar_games_indices[1:]]
-        recommended_games = recommended_games[~recommended_games['item_id'].isin([id_producto])].drop_duplicates(subset='title')
+            
+            recommended_games = df_subset.loc[similar_games_indices[1:]]
+            recommended_games = recommended_games[~recommended_games['item_id'].isin([id_producto])].drop_duplicates(subset='title')
 
-        # Limitar la recomendación a 5 juegos
-        num_recommendations = 5
-        recommendations_list = recommended_games.head(num_recommendations)['title'].tolist()
+            recommendations_list = recommended_games.head(num_recommendations)['title'].tolist()
 
-        if len(recommendations_list) < num_recommendations:
-            message = f"Se encontraron {len(recommendations_list)} recomendaciones para este ID."
-            recommendations_list += [None] * (num_recommendations - len(recommendations_list))
+            if len(recommendations_list) < num_recommendations:
+                message = f"Se encontraron {len(recommendations_list)} recomendaciones para este ID."
+                recommendations_list += [None] * (num_recommendations - len(recommendations_list))
+            else:
+                message = None
+
+            return {"recomendaciones": recommendations_list, "message": message}
         else:
-            message = None
-
-        return {"recomendaciones": recommendations_list, "message": message}
+            return {"message": "No se encontraron juegos similares."}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}") from e
