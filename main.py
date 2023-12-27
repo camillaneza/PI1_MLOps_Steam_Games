@@ -9,17 +9,12 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 import gzip
 
-parquet_file_path1 = "Jupyter/df_combinado_gzip.parquet"
+
 parquet_file_path2 = "Jupyter/df_combinado2_gzip.parquet"
 
 try:
     sample_percent = 5
 
-    # Lee una muestra del archivo Parquet con pyarrow
-    parquet_file1 = pq.ParquetFile(parquet_file_path1)
-    total_rows1 = parquet_file1.metadata.num_rows
-    sample_rows1 = int(total_rows1 * (sample_percent / 100.0))
-    df_combinado_muestra1 = parquet_file1.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows1)
 
     # Lee una muestra del archivo Parquet con pyarrow
     parquet_file2 = pq.ParquetFile(parquet_file_path2)
