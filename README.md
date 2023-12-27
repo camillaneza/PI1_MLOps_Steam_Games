@@ -30,7 +30,8 @@ Se tienen 3 datasets:
 Como se mencionó anteriormente, como primera medida se llevó a cabo un proceso de ETL (Extracción, Transformación y Carga), analizando el tipo de dato de cada columna de los distintos datasets, transformándolos cuando fuera necesario, eliminando duplicados, eliminando columnas con valores nulos, desañidando 2 columnas que estaban - justamente - añidadas. También se procedió a eliminar las columnas que no iban a ser de utilidad para el posterior análisis y funcionamiento de api.
 Para la realización de la consigna de realizar un un análisis de sentimiento a los comentarios de los usuarios, se introdujo una nueva columna llamada 'sentiment_analysis', la cual sustituye a la columna que originalmente contenía los comentarios de los usuarios. Esta columna clasifica los sentimientos de los comentarios según la siguiente escala:  0 si el sentimiento es negativo, 1 si es neutral o si no hay un comentario asociado,  2 si el sentimiento es positivo. 
 Dado que se pedía que se aplicara un análisis de sentimiento con NLP, se utilizó la biblioteca TextBlob, que clasifica la polaridad del texto como positiva, negativa o neutra. 
-Se guardaron los datasets limpios en archivos parquet. Luego se procedió a la realización del EDA (Análisis Exploratorio de Datos), para identificar los datos necesarios para la posterior realización del modelo de recomendación. Se usaron las librerías Matplotlib y Seaborn para la visualización.
+Se guardaron los datasets limpios en archivos parquet. 
+Luego se procedió a la realización del EDA (Análisis Exploratorio de Datos), para identificar los datos necesarios para la posterior realización del modelo de recomendación. Se usaron las librerías Matplotlib y Seaborn para la visualización.
 Todo lo antedicho se puede ver en los archivos:  
 [ETL_Steam_Games](Jupyter/ETL_Steam_Games.ipynb)  
 [ETL_user_items](Jupyter/ETL_user_items.ipynb)  
@@ -53,7 +54,7 @@ El desarrollo de la API se realizó usando el framework FastAPI, generando las 5
 
 • _sentiment_analysis( año : int ):_ Según el año de lanzamiento, se devuelve una lista con la cantidad de registros de reseñas de usuarios que se encuentren categorizados con un análisis de sentimiento.
 
-Posteriormente, se realizó el Modelo de Recomendación Automático, utilizando el sistema de recomendación item-item:
+Posteriormente, se realizó el Modelo de Recomendación Automático, utilizando el sistema de recomendación item-item. Para su realización se utilizó la similitud del coseno, que determina cuán similares son dos conjuntos de datos o elementos, y se calcula utilizando el coseno del ángulo entre los vectores que representan esos datos o elementos.
 • _recomendacion_juego( id de producto ):_ Ingresando el id de producto, deberíamos recibir una lista con 5 juegos recomendados similares al ingresado.
 
 Lo antedicho se puede observar en el archivo [main](main.py)  
