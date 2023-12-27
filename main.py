@@ -11,7 +11,7 @@ import gzip
 
 
 parquet_file_path1 = "Jupyter/df_combinado_gzip.parquet"
-parquet_file_path2 = "Jupyter/df_combinado2_gzip.parquet"
+
 
 try:
     sample_percent = 5
@@ -21,12 +21,6 @@ try:
     total_rows1 = parquet_file1.metadata.num_rows
     sample_rows1 = int(total_rows1 * (sample_percent / 100.0))
     df_combinado_muestra1 = parquet_file1.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows1)
-
-    # Lee una muestra del archivo Parquet con pyarrow
-    parquet_file2 = pq.ParquetFile(parquet_file_path2)
-    total_rows2 = parquet_file2.metadata.num_rows
-    sample_rows2 = int(total_rows2 * (sample_percent / 100.0))
-    df_combinado_muestra2 = parquet_file2.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows2//90)
 
 except FileNotFoundError:
     # Si alguno de los archivos no se encuentra, maneja la excepción
@@ -66,7 +60,58 @@ def UsersRecommend(anio: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail="Error al obtener los juegos mas recomendados.")
 
+@app.get('/UsersNotRecommend/{anio}')
+def UsersNotRecommend(anio: int):
+    '''
+    Datos:
+    - anio (int): Año para el cual se busca el top 3 de juegos menos recomendados.
 
+    Funcionalidad:
+    - Devuelve el top 3 de juegos menos recomendados por usuarios para el año dado.
+
+    Return:
+    - List: [{"Puesto 1": str}, {"Puesto 2": str}, {"Puesto 3": str}]
+    '''
+    try:
+        filtered_df = df_combinado_muestra1[
+        (df_combinado_muestra1["reviews_posted"] == anio) &
+        (df_combinado_muestra1["reviews_recommend"] == False) &
+        (df_combinado_muestra1["sentiment_analysis"]==0)
+        ]
+        not_recommend_counts = filtered_df.groupby("title")["title"].count().reset_index(name="count").sort_values(by="count", ascending=False).head(3)
+        top_3_dict = {f"Puesto {i+1}": juego for i, juego in enumerate(not_recommend_counts['title'])}
+        return top_3_dict
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Error al obtener los juegos menos recomendados.")
+    
+@app.get('/sentiment_analysis/{anio}')
+def sentiment_analysis(anio: int):
+
+    '''
+    Según el año de lanzamiento, se devuelve una lista con la cantidad de registros de reseñas de usuarios que se encuentren categorizados con un análisis de sentimiento.
+
+    Args:
+        año (int): Año para el cual se busca el análisis de sentimiento.
+
+    Returns:
+        dict: Diccionario con la cantidad de reseñas por sentimiento.
+    '''
+  
+    try:    
+        filtered_df = df_combinado_muestra1[df_combinado_muestra1["release_date"] == anio]
+
+        
+        sentiment_counts = filtered_df["sentiment_analysis"].value_counts()
+
+        
+        sentiment_mapping = {2: "Positive", 1: "Neutral", 0: "Negative"}
+        sentiment_counts_mapped = {sentiment_mapping[key]: value for key, value in sentiment_counts.items()}
+
+        return sentiment_counts_mapped
+    except pd.errors.EmptyDataError:
+        raise HTTPException(status_code=404, detail=f"No hay datos para el año {anio}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 

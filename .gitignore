@@ -7,6 +7,7 @@ Data/user_reviews.csv
 Data/users_items.csv
 Data/steam_games.csv
 Data/Diccionario de Datos STEAM.xlsx
+Data/users_items.parquet
 Jupyter/users_items.parquet
 Jupyter/users_reviews.parquet
 Jupyter/__pycache__
