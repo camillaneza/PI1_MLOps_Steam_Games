@@ -362,6 +362,6 @@ def users_not_recommend(anio: int = Path(..., description="Devuelve el top 3 de 
 def sentiment_analysis(anio: int = Path(..., description="Devuelve una lista con la cantidad de registros de reseñas de usuarios que se encuentran categorizados con un análisis de sentimiento en el año especificado")):
     return sentiment_analysis(anio)
 
-@app.get(path='/RecomendacionJuego/{id_producto}', tags=["Sistema de Recomendación: Item-Item"])
+@app.get(path='/Recomendacion_Juego/{id_producto}', tags=["Sistema de Recomendación: Item-Item"])
 async def recomendacion_juego(id_producto: int = Path(..., description= "Devuelve una lista con 5 juegos recomendados similares al ingresado")):
     return recomendacion_juego(id_producto)
