@@ -8,13 +8,13 @@ import asyncio
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 import gzip
-from fastapi_cache import Cache
+from fastapi_cache import caches
 
 
 parquet_file_path1 = "Jupyter/df_combinado_gzip.parquet"
 parquet_file_path2 = "Jupyter/df_combinado2_gzip.parquet"
 
-
+caches.set("default", "sqlite:///:memory:")
 
 app = FastAPI(title= 'Proyecto Integrador 1',
               description= 'Machine Learning Operations (MLOps), por Camila Fernández Llaneza',
@@ -235,10 +235,10 @@ tfidf_vectorizer = TfidfVectorizer()
 tfidf_matrix = tfidf_vectorizer.fit_transform(df_subset['title'].fillna('').astype(str) + ' ' + df_subset['genres'].fillna('').astype(str))
 
 
-cache = Cache()
+
+
 
 @app.get('/RecomendacionJuego/{id_producto}')
-@cache.cache()
 async def recomendacion_juego(id_producto: int = Path(..., description="ID del juego para obtener recomendaciones")):
     """
     Endpoint para obtener una lista de juegos recomendados similares a un juego dado.
