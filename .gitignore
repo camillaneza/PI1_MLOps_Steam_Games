@@ -10,4 +10,5 @@ Data/Diccionario de Datos STEAM.xlsx
 Jupyter/users_items.parquet
 Jupyter/users_reviews.parquet
 Jupyter/__pycache__
+__pycache__
 h_venv/
