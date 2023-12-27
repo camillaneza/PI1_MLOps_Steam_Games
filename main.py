@@ -10,17 +10,16 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import gzip
 
 
-parquet_file_path2 = "Jupyter/df_combinado2_gzip.parquet"
+parquet_file_path1 = "Jupyter/df_combinado_gzip.parquet"
 
 try:
     sample_percent = 5
 
-
     # Lee una muestra del archivo Parquet con pyarrow
-    parquet_file2 = pq.ParquetFile(parquet_file_path2)
-    total_rows2 = parquet_file2.metadata.num_rows
-    sample_rows2 = int(total_rows2 * (sample_percent / 100.0))
-    df_combinado_muestra2 = parquet_file2.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows2//50)
+    parquet_file1 = pq.ParquetFile(parquet_file_path1)
+    total_rows1 = parquet_file1.metadata.num_rows
+    sample_rows1 = int(total_rows1 * (sample_percent / 100.0))
+    df_combinado_muestra1 = parquet_file1.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows1)
 
 except FileNotFoundError:
     # Si alguno de los archivos no se encuentra, maneja la excepción
@@ -37,32 +36,29 @@ app = FastAPI(title= 'Proyecto Integrador 1',
 
 
 
-@app.get('/PlayTimeGenre/{genero}')
-def PlayTimeGenre(genero: str):
+@app.get('/UsersRecommend/{anio}')
+def UsersRecommend(anio: int):
     '''
     Datos:
-    - genero (str): Género para el cual se busca el año con más horas jugadas.
+    - anio (int): Año para el cual se busca el top 3 de juegos más recomendados.
 
     Funcionalidad:
-    - Devuelve el año con más horas jugadas para el género especificado.
+    - Devuelve el top 3 de juegos más recomendados por usuarios para el año dado.
 
     Return:
-    - Dict: {"Año de lanzamiento con más horas jugadas para Género X": int}
+    - List: [{"Puesto 1": str}, {"Puesto 2": str}, {"Puesto 3": str}]
     '''
     try:
-        genero_filtrado = df_combinado_muestra2[df_combinado_muestra2['genres'].apply(lambda x: genero in x)]
-
-        if genero_filtrado.empty:
-            raise HTTPException(status_code=404, detail=f"No hay datos para el género {genero}")
-
-        genero_filtrado['playtime_forever'] = genero_filtrado['playtime_forever'] / 60
-
-        max_hours_year = genero_filtrado.groupby('release_date')['playtime_forever'].sum().idxmax()
-
-        return {"Año de lanzamiento con más horas jugadas para el Género " + genero: int(max_hours_year)}
-
+        filtered_df = df_combinado_muestra1[
+        (df_combinado_muestra1["reviews_posted"] == anio) &
+        (df_combinado_muestra1["reviews_recommend"] == True) &
+        (df_combinado_muestra1["sentiment_analysis"]>=1)
+        ]
+        recommend_counts = filtered_df.groupby("title")["title"].count().reset_index(name="count").sort_values(by="count", ascending=False).head(3)
+        top_3_dict = {f"Puesto {i+1}": juego for i, juego in enumerate(recommend_counts['title'])}
+        return top_3_dict
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Error al obtener los juegos mas recomendados.")
 
 
 
