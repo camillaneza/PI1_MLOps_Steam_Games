@@ -10,8 +10,11 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import gzip
 
 
-parquet_file_path1 = "Jupyter/df_combinado_gzip.parquet"
-parquet_file_path2 = "Jupyter/df_combinado2_gzip.parquet"
+parquet_file_path1 = "Jupyter/df_PlayTimeGenre_gzip.parquet"
+parquet_file_path2 = "Jupyter/df_UserForGenre_gzip.parquet"
+parquet_file_path3 = "Jupyter/df_UsersRecommend_gzip.parquet"
+parquet_file_path4 = "Jupyter/df_sentiment_analysis_gzip.parquet"
+parquet_file_path5 = "Jupyter/df_RecomendacionJuego_gzip.parquet"
 
 
 app = FastAPI(title= 'Proyecto Integrador 1',
@@ -37,11 +40,11 @@ async def PlayTimeGenre(genero: str):
         sample_percent = 5
 
         # Lee una muestra del archivo Parquet con pyarrow
-        parquet_file2 = pq.ParquetFile(parquet_file_path2)
-        total_rows2 = parquet_file2.metadata.num_rows
-        sample_rows2 = int(total_rows2 * (sample_percent / 100.0))
-        df_combinado_muestra2 = parquet_file2.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows2//80)
-        genero_filtrado = df_combinado_muestra2[df_combinado_muestra2['genres'].apply(lambda x: genero in x)]
+        parquet_file1 = pq.ParquetFile(parquet_file_path1)
+        total_rows1 = parquet_file1.metadata.num_rows
+        sample_rows1 = int(total_rows1 * (sample_percent / 100.0))
+        df_PlayTimeGenre_muestra = parquet_file1.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows1//80)
+        genero_filtrado = df_PlayTimeGenre_muestra[df_PlayTimeGenre_muestra['genres'].apply(lambda x: genero in x)]
 
         if genero_filtrado.empty:
             raise HTTPException(status_code=404, detail=f"No hay datos para el género {genero}")
@@ -75,13 +78,10 @@ async def UserForGenre(genero:str):
         parquet_file2 = pq.ParquetFile(parquet_file_path2)
         total_rows2 = parquet_file2.metadata.num_rows
         sample_rows2 = int(total_rows2 * (sample_percent / 100.0))
-        df_combinado_muestra2 = parquet_file2.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows2//80)
-
-    
-
-        
-        condition = df_combinado_muestra2['genres'].apply(lambda x: genero in x)
-        juegos_genero = df_combinado_muestra2[condition]
+        df_UserForGenre_muestra = parquet_file2.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows2//80)
+          
+        condition = df_UserForGenre_muestra['genres'].apply(lambda x: genero in x)
+        juegos_genero = df_UserForGenre_muestra[condition]
 
        
         juegos_genero['playtime_forever'] = juegos_genero['playtime_forever'] / 60
@@ -128,15 +128,15 @@ async def UsersRecommend(anio: int):
         sample_percent = 5
 
         # Lee una muestra del archivo Parquet con pyarrow
-        parquet_file1 = pq.ParquetFile(parquet_file_path1)
-        total_rows1 = parquet_file1.metadata.num_rows
-        sample_rows1 = int(total_rows1 * (sample_percent / 100.0))
-        df_combinado_muestra1 = parquet_file1.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows1)
+        parquet_file3 = pq.ParquetFile(parquet_file_path3)
+        total_rows3 = parquet_file3.metadata.num_rows
+        sample_rows3 = int(total_rows3 * (sample_percent / 100.0))
+        df_UsersRecommend_muestra = parquet_file3.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows3)
 
-        filtered_df = df_combinado_muestra1[
-        (df_combinado_muestra1["reviews_posted"] == anio) &
-        (df_combinado_muestra1["reviews_recommend"] == True) &
-        (df_combinado_muestra1["sentiment_analysis"]>=1)
+        filtered_df = df_UsersRecommend_muestra[
+        (df_UsersRecommend_muestra["reviews_posted"] == anio) &
+        (df_UsersRecommend_muestra["reviews_recommend"] == True) &
+        (df_UsersRecommend_muestra["sentiment_analysis"]>=1)
         ]
         recommend_counts = filtered_df.groupby("title")["title"].count().reset_index(name="count").sort_values(by="count", ascending=False).head(3)
         top_3_dict = {f"Puesto {i+1}": juego for i, juego in enumerate(recommend_counts['title'])}
@@ -160,15 +160,15 @@ async def UsersNotRecommend(anio: int):
         sample_percent = 5
 
         # Lee una muestra del archivo Parquet con pyarrow
-        parquet_file1 = pq.ParquetFile(parquet_file_path1)
-        total_rows1 = parquet_file1.metadata.num_rows
-        sample_rows1 = int(total_rows1 * (sample_percent / 100.0))
-        df_combinado_muestra1 = parquet_file1.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows1)
+        parquet_file4 = pq.ParquetFile(parquet_file_path3)
+        total_rows3 = parquet_file4.metadata.num_rows
+        sample_rows3 = int(total_rows3 * (sample_percent / 100.0))
+        df_UsersRecommend_muestra = parquet_file4.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows3)
 
-        filtered_df = df_combinado_muestra1[
-        (df_combinado_muestra1["reviews_posted"] == anio) &
-        (df_combinado_muestra1["reviews_recommend"] == False) &
-        (df_combinado_muestra1["sentiment_analysis"]==0)
+        filtered_df = df_UsersRecommend_muestra[
+        (df_UsersRecommend_muestra["reviews_posted"] == anio) &
+        (df_UsersRecommend_muestra["reviews_recommend"] == False) &
+        (df_UsersRecommend_muestra["sentiment_analysis"]==0)
         ]
         not_recommend_counts = filtered_df.groupby("title")["title"].count().reset_index(name="count").sort_values(by="count", ascending=False).head(3)
         top_3_dict = {f"Puesto {i+1}": juego for i, juego in enumerate(not_recommend_counts['title'])}
@@ -193,12 +193,12 @@ async def sentiment_analysis(anio: int):
         sample_percent = 5
 
         # Lee una muestra del archivo Parquet con pyarrow
-        parquet_file1 = pq.ParquetFile(parquet_file_path1)
-        total_rows1 = parquet_file1.metadata.num_rows
-        sample_rows1 = int(total_rows1 * (sample_percent / 100.0))
-        df_combinado_muestra1 = parquet_file1.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows1)
+        parquet_file5 = pq.ParquetFile(parquet_file_path4)
+        total_rows5 = parquet_file5.metadata.num_rows
+        sample_rows5 = int(total_rows5 * (sample_percent / 100.0))
+        df_sentiment_analysis_muestra = parquet_file5.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows5)
         
-        filtered_df = df_combinado_muestra1[df_combinado_muestra1["release_date"] == anio]
+        filtered_df = df_sentiment_analysis_muestra[df_sentiment_analysis_muestra["release_date"] == anio]
 
         
         sentiment_counts = filtered_df["sentiment_analysis"].value_counts()
@@ -216,9 +216,9 @@ async def sentiment_analysis(anio: int):
 
 
 
-@app.get('/RecomendacionJuego/{id_producto}')
+@app.get('/Recomendacion_Juego/{id_producto}')
 async def recomendacion_juego(id_producto: int = Path(..., description="ID del juego para obtener recomendaciones")):
-    """
+    '''
     Endpoint para obtener una lista de juegos recomendados similares a un juego dado.
 
     Parámetros:
@@ -240,27 +240,21 @@ async def recomendacion_juego(id_producto: int = Path(..., description="ID del j
         {"id": 202, "nombre": "Juego D"},
         {"id": 303, "nombre": "Juego E"}
     ]
-    """
+    '''
     try:
         sample_percent = 5
 
         # Lee una muestra del archivo Parquet con pyarrow
-        parquet_file2 = pq.ParquetFile(parquet_file_path2)
-        total_rows2 = parquet_file2.metadata.num_rows
-        sample_rows2 = int(total_rows2 * (sample_percent / 100.0))
-        df_combinado_muestra2 = parquet_file2.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows2//80)
+        parquet_file6 = pq.ParquetFile(parquet_file_path5)
+        total_rows6 = parquet_file6.metadata.num_rows
+        sample_rows6 = int(total_rows6 * (sample_percent / 100.0))
+        df_RecomendacionJuego_muestra = parquet_file6.read_row_groups(row_groups=[0]).to_pandas()
 
         porcentaje_muestra = 50
-        total_registros = len(df_combinado_muestra2)
+        total_registros = len(df_RecomendacionJuego_muestra)
         num_registros = int(total_registros * (porcentaje_muestra / 100.0))
-        df_subset = df_combinado_muestra2.sample(n=num_registros, random_state=42).reset_index(drop=True)
-        porcentaje_muestra = 50
-        total_registros = len(df_combinado_muestra2)
-
-        num_registros = int(total_registros * (porcentaje_muestra / 100))
-
-        df_subset = df_combinado_muestra2.sample(n=num_registros, random_state=42).reset_index(drop=True)
-
+        df_subset = df_RecomendacionJuego_muestra.sample(n=num_registros, random_state=42).reset_index(drop=True)
+        
         num_recommendations = 5
 
         juego_seleccionado = df_subset[df_subset['item_id'] == id_producto]

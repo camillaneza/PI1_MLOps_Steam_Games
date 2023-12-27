@@ -10,6 +10,13 @@ Data/Diccionario de Datos STEAM.xlsx
 Data/users_items.parquet
 Jupyter/users_items.parquet
 Jupyter/users_reviews.parquet
+Jupyter/df_PlayTimeGenre.parquet
+Jupyter/df_RecomendacionJuego.parquet
+Jupyter/df_sentiment_analysis.parquet
+Jupyter/df_UserForGenre.parquet
+Jupyter/df_UsersRecommend.parquet
+Jupyter/df_combinado.parquet
+Jupyter/df_combinado2.parquet
 Jupyter/__pycache__
 __pycache__
 h_venv/
