@@ -1,19 +1,19 @@
 <p align="center">
-  <b style="font-size: 24px;"> PROYECTO INDIVIDUAL 1: MLOPS:rocket:</b>
+  <b style="font-size: 24px;"> PROYECTO INDIVIDUAL 1: MLOPS</b> :rocket:
 </p>
 
 <p align="center">
- <b style="font-size: 24px;"> PLATAFORMA STEAM GAMES:joystick:</b>
+ <b style="font-size: 24px;"> PLATAFORMA STEAM GAMES</b> :joystick:
 </p>
 
 <p align="center">
-  <i><u>INTRODUCCIÓN:</u></i>
+  :small_orange_diamond: <i><u>INTRODUCCIÓN:</u></i> :small_orange_diamond:
 </p>
 
 En este proyecto se va a trabajar sobre la plataforam de juegos Steam, desarrollando un rol de Data Engineer para lograr tener un MVP (Minimum Viable Product). En base a 3 datasets iniciales, se va a desarrollar el correspondiente proceso de ETL (Extracción, Transformación y Carga) y de EDA (Análisis Exploratorio de Datos). Además, se va a realizar un  análisis de sentimiento con NLP, y un Modelo de aprendizaje automático, con un sistema de recomendación.
 
 <p align="center">
-  <i><u>ARCHIVOS INICIALES:</u></i>
+  :small_orange_diamond: <i><u>ARCHIVOS INICIALES:</u></i> :small_orange_diamond:
 </p>
 
 Se tienen 3 datasets:
@@ -24,7 +24,7 @@ Se tienen 3 datasets:
 • output_steam_games.json: Conjunto de datos con títulos, géneros, id de los juegos, sus precios y características.
 
 <p align="center">
-  <i><u>PROCESO DE ETL, EDA y FEATURE ENGINEERING:</u></i>
+  :small_orange_diamond: <i><u>PROCESO DE ETL, EDA y FEATURE ENGINEERING:</u></i> :small_orange_diamond:
 </p>
 
 Como se mencionó anteriormente, como primera medida se llevó a cabo un proceso de ETL (Extracción, Transformación y Carga), analizando el tipo de dato de cada columna de los distintos datasets, transformándolos cuando fuera necesario, eliminando duplicados, eliminando columnas con valores nulos, desañidando 2 columnas que estaban - justamente - añidadas. También se procedió a eliminar las columnas que no iban a ser de utilidad para el posterior análisis y funcionamiento de api.
@@ -39,7 +39,7 @@ Todo lo antedicho se puede ver en los archivos:
 
 
 <p align="center">
-  <i><u>API:</u></i>
+  :small_orange_diamond: <i><u>API:</u></i> :small_orange_diamond:
 </p>
 
 El desarrollo de la API se realizó usando el framework FastAPI, generando las 5 funciones propuestas para las consultas:
@@ -57,9 +57,12 @@ Posteriormente, se realizó el Modelo de Recomendación Automático, utilizando 
 • _recomendacion_juego( id de producto ):_ Ingresando el id de producto, deberíamos recibir una lista con 5 juegos recomendados similares al ingresado.
 
 Lo antedicho se puede observar en el archivo [main](main.py)  
+[FastAPI](http://127.0.0.1:8000/)
 
 <p align="center">
-  <i><u>DEPLOYMENT:</u></i>
+  :small_orange_diamond: <i><u>DEPLOYMENT:</u></i> :small_orange_diamond:
 </p>
 
 Luego de verificar que la API funciona a nivel local, se procedió a usar Render para que la misma pueda ser consumida desde la web. Dado que el servicio gratuito de Render consta de poca memoria, se optó por un muestreo porcentual de los Dataframes pertinentes.
+
+Lo antedicho se puede observar en el siguiente link: [Render](https://pi1-mlops-steam-games.onrender.com)
