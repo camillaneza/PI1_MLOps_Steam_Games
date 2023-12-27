@@ -26,7 +26,7 @@ try:
     parquet_file2 = pq.ParquetFile(parquet_file_path2)
     total_rows2 = parquet_file2.metadata.num_rows
     sample_rows2 = int(total_rows2 * (sample_percent / 100.0))
-    df_combinado_muestra2 = parquet_file2.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows2//50)
+    df_combinado_muestra2 = parquet_file2.read_row_groups(row_groups=[0]).to_pandas().head(sample_rows2//90)
 
 except FileNotFoundError:
     # Si alguno de los archivos no se encuentra, maneja la excepción
